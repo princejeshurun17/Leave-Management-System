@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leave Management Analytics</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>LMS Admin</h2>
+                <button id="toggleSidebar" class="toggle-sidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <div class="sidebar-content">
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="userGreeting">Welcome!</span>
+                </div>
+                <nav class="sidebar-nav">
+                    <a href="admin-dashboard.html" class="nav-item">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Leave Requests</span>
+                    </a>
+                    <a href="admin-dashboard.html#user-management" class="nav-item">
+                        <i class="fas fa-users"></i>
+                        <span>User Management</span>
+                    </a>
+                    <a href="admin-analytics.html" class="nav-item active">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Analytics</span>
+                    </a>
+                    <button id="logoutButton" class="nav-item logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <header class="dashboard-header">
+                <h1>Leave Management Analytics</h1>
+            </header>
+            
+            <main>
+                <section class="analytics-summary card">
+                    <h2>Summary</h2>
+                    <div id="summaryStats" class="summary-grid"></div>
+                </section>
+
+                <div class="analytics-grid">
+                    <section class="analytics-chart card">
+                        <h2>Leave Requests Trend</h2>
+                        <canvas id="leaveRequestsTrend"></canvas>
+                    </section>
+
+                    <section class="analytics-chart card">
+                        <h2>Leave Balance Distribution</h2>
+                        <canvas id="leaveBalanceDistribution"></canvas>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="admin-analytics.js"></script>
+</body>
+</html>

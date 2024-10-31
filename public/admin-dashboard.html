@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Leave Management System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>LMS Admin</h2>
+                <button id="toggleSidebar" class="toggle-sidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <div class="sidebar-content">
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="userGreeting">Welcome!</span>
+                </div>
+                <nav class="sidebar-nav">
+                    <a href="#" class="nav-item active" data-tab="leave-requests">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Leave Requests</span>
+                    </a>
+                    <a href="#" class="nav-item" data-tab="user-management">
+                        <i class="fas fa-users"></i>
+                        <span>User Management</span>
+                    </a>
+                    <a href="admin-analytics.html" class="nav-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Analytics</span>
+                    </a>
+                    <button id="logoutButton" class="nav-item logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
+                </nav>
+            </div>
+        </aside>
+
+        <div class="main-content">
+            <header class="dashboard-header">
+                <h1>Admin Dashboard</h1>
+            </header>
+            
+            <div class="tab-container">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" data-tab="leave-requests">Leave Requests</button>
+                    <button class="tab-btn" data-tab="user-management">User Management</button>
+                    <button class="tab-btn" data-tab="announcements">Announcements</button>
+                </div>
+
+                <!-- Leave Requests Tab -->
+                <section id="leave-requests" class="tab-content active">
+                    <div class="card">
+                        <h2>All Leave Requests</h2>
+                        <div class="filters">
+                            <input type="text" id="requestSearchInput" placeholder="Search by username or reason">
+                            <select id="leaveTypeFilter">
+                                <option value="">All Leave Types</option>
+                                <option value="Annual Leave">Annual Leave</option>
+                                <option value="Sick Leave">Sick Leave</option>
+                                <option value="Emergency Leave">Emergency Leave</option>
+                                <option value="Maternity Leave">Maternity Leave</option>
+                                <option value="Paternity Leave">Paternity Leave</option>
+                                <option value="Bereavement Leave">Bereavement Leave</option>
+                                <option value="Unpaid Leave">Unpaid Leave</option>
+                            </select>
+                            <select id="statusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="leaveRequestsTable">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Days</th>
+                                        <th>Type</th>
+                                        <th>Reason</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaveRequestsList"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- User Management Tab -->
+                <section id="user-management" class="tab-content">
+                    <div class="card">
+                        <h2>User Management</h2>
+                        <div class="filters">
+                            <input type="text" id="userSearchInput" placeholder="Search by username">
+                        </div>
+                        <div class="table-responsive">
+                            <table id="userManagementTable">
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Role</th>
+                                        <th>Leave Balance</th>
+                                        <th>Total Leaves Taken</th>
+                                        <th>Pending Requests</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userManagementList"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Announcements Tab -->
+                <section id="announcements" class="tab-content">
+                    <div class="card">
+                        <h2>Announcements</h2>
+                        <div class="announcement-controls">
+                            <button class="btn btn-primary" id="newAnnouncementBtn">
+                                <i class="fas fa-plus"></i> New Announcement
+                            </button>
+                        </div>
+                        <div class="announcements-list" id="adminAnnouncementsList">
+                            <!-- Announcements will be loaded here -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+    <div id="announcementModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>New Announcement</h2>
+            <form id="announcementForm">
+                <div class="form-group">
+                    <label for="announcementTitle">Title:</label>
+                    <input type="text" id="announcementTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="announcementContent">Content:</label>
+                    <textarea id="announcementContent" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="announcementPriority">Priority:</label>
+                    <select id="announcementPriority" required>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Post Announcement</button>
+            </form>
+        </div>
+    </div>
+    <script src="admin-dashboard.js"></script>
+</body>
+</html>
