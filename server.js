@@ -63,6 +63,28 @@ const db = new sqlite3.Database('leave_management.db', (err) => {
                     console.log('Leave_requests table created or already exists.');
                 }
             });
+
+            // Add status column to leave_requests if it doesn't exist
+            db.run(`
+                ALTER TABLE leave_requests 
+                ADD COLUMN status TEXT DEFAULT 'Pending'
+            `, (err) => {
+                if (err) {
+                    // Column might already exist, which is fine
+                    console.log('Status column might already exist:', err.message);
+                }
+            });
+
+            // Add leave_type column to leave_requests if it doesn't exist
+            db.run(`
+                ALTER TABLE leave_requests 
+                ADD COLUMN leave_type TEXT
+            `, (err) => {
+                if (err) {
+                    // Column might already exist, which is fine
+                    console.log('leave_type column might already exist:', err.message);
+                }
+            });
         });
 
         // Check if user_id column exists in leave_requests table
@@ -172,20 +194,26 @@ app.post('/api/leave_request', authenticateToken, validateLeaveRequest, (req, re
 
 // Get all leave requests
 app.get('/api/leave_requests', authenticateToken, (req, res) => {
-    const query = req.user.role === 'admin' 
-        ? `SELECT lr.*, u.username 
-           FROM leave_requests lr 
-           JOIN users u ON lr.user_id = u.id`
-        : 'SELECT * FROM leave_requests WHERE user_id = ?';
+    const userId = req.user.id;
     
-    const params = req.user.role === 'admin' ? [] : [req.user.id];
-
-    db.all(query, params, (err, rows) => {
+    db.all(`
+        SELECT 
+            id,
+            start_date,
+            end_date,
+            leave_type,
+            reason,
+            status
+        FROM leave_requests 
+        WHERE user_id = ?
+        ORDER BY start_date DESC
+    `, [userId], (err, rows) => {
         if (err) {
-            console.error('Error fetching leave requests:', err);
-            return res.status(500).json({ error: 'Error fetching leave requests' });
+            console.error('Database error:', err);
+            return res.status(500).json({ error: 'Failed to fetch leave requests' });
         }
-        res.json(rows);
+        
+        res.json(rows || []);
     });
 });
 
@@ -357,106 +385,213 @@ app.put('/api/admin/leave_request/:id', authenticateToken, isAdmin, (req, res) =
     });
 });
 
-app.get('/api/admin/analytics', authenticateToken, isAdmin, (req, res) => {
-    const analyticsData = {
-        summary: {
-            totalUsers: 0,
-            averageLeaveBalance: 0,
-            totalPendingRequests: 0,
-            totalApprovedRequests: 0
-        },
-        leaveRequestsTrend: {
-            labels: [],
-            data: []
-        },
-        leaveBalanceDistribution: {
-            labels: ['0-5', '6-10', '11-15', '16-20', '21-25', '26-30'],
-            data: [0, 0, 0, 0, 0, 0]
-        }
-    };
+app.get('/api/admin/analytics', authenticateToken, async (req, res) => {
+    // Verify admin role
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Access denied. Admin only.' });
+    }
 
-    db.serialize(() => {
+    try {
         // Get total users and average leave balance
-        db.get('SELECT COUNT(*) as totalUsers, AVG(leave_balance) as avgBalance FROM users', (err, row) => {
-            if (err) {
-                console.error('Error fetching user stats:', err);
-                return res.status(500).json({ error: 'Error fetching analytics data' });
-            }
-            analyticsData.summary.totalUsers = row.totalUsers;
-            analyticsData.summary.averageLeaveBalance = row.avgBalance;
-        });
-
-        // Get total pending and approved requests
-        db.get('SELECT COUNT(*) as pendingCount FROM leave_requests WHERE status = "Pending"', (err, row) => {
-            if (err) {
-                console.error('Error fetching pending requests count:', err);
-                return res.status(500).json({ error: 'Error fetching analytics data' });
-            }
-            analyticsData.summary.totalPendingRequests = row.pendingCount;
-        });
-
-        db.get('SELECT COUNT(*) as approvedCount FROM leave_requests WHERE status = "Approved"', (err, row) => {
-            if (err) {
-                console.error('Error fetching approved requests count:', err);
-                return res.status(500).json({ error: 'Error fetching analytics data' });
-            }
-            analyticsData.summary.totalApprovedRequests = row.approvedCount;
-        });
-
-        // Get leave requests trend (last 6 months)
-        db.all(`
-            SELECT strftime('%Y-%m', start_date) as month, COUNT(*) as count
-            FROM leave_requests
-            WHERE start_date >= date('now', '-6 months')
-            GROUP BY month
-            ORDER BY month
-        `, (err, rows) => {
-            if (err) {
-                console.error('Error fetching leave requests trend:', err);
-                return res.status(500).json({ error: 'Error fetching analytics data' });
-            }
-            analyticsData.leaveRequestsTrend.labels = rows.map(row => row.month);
-            analyticsData.leaveRequestsTrend.data = rows.map(row => row.count);
-        });
-
-        // Get leave balance distribution
-        db.all(`
-            SELECT 
-                CASE 
-                    WHEN leave_balance BETWEEN 0 AND 5 THEN '0-5'
-                    WHEN leave_balance BETWEEN 6 AND 10 THEN '6-10'
-                    WHEN leave_balance BETWEEN 11 AND 15 THEN '11-15'
-                    WHEN leave_balance BETWEEN 16 AND 20 THEN '16-20'
-                    WHEN leave_balance BETWEEN 21 AND 25 THEN '21-25'
-                    ELSE '26-30'
-                END as balance_range,
-                COUNT(*) as count
-            FROM users
-            GROUP BY balance_range
-        `, (err, rows) => {
-            if (err) {
-                console.error('Error fetching leave balance distribution:', err);
-                return res.status(500).json({ error: 'Error fetching analytics data' });
-            }
-            rows.forEach(row => {
-                const index = analyticsData.leaveBalanceDistribution.labels.indexOf(row.balance_range);
-                if (index !== -1) {
-                    analyticsData.leaveBalanceDistribution.data[index] = row.count;
-                }
+        const userStats = await new Promise((resolve, reject) => {
+            db.get(`
+                SELECT 
+                    COUNT(*) as totalUsers,
+                    AVG(leave_balance) as averageLeaveBalance
+                FROM users
+                WHERE role != 'admin'
+            `, (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
             });
         });
 
-        // After all queries, add this:
-        db.all(`SELECT * FROM users`, (err, rows) => {
-            if (err) {
-                console.error('Error fetching users:', err);
-                return res.status(500).json({ error: 'Error fetching analytics data' });
-            }
-            console.log('Analytics data:', analyticsData);
-            console.log('Number of users:', rows.length);
-            res.json(analyticsData);
+        // Get leave request statistics
+        const leaveStats = await new Promise((resolve, reject) => {
+            db.get(`
+                SELECT 
+                    COUNT(CASE WHEN status = 'Pending' THEN 1 END) as totalPending,
+                    COUNT(CASE WHEN status = 'Approved' THEN 1 END) as totalApproved
+                FROM leave_requests
+            `, (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
         });
-    });
+
+        // Get leave types distribution
+        const leaveTypes = await new Promise((resolve, reject) => {
+            db.all(`
+                SELECT 
+                    leave_type,
+                    COUNT(*) as count
+                FROM leave_requests
+                GROUP BY leave_type
+            `, (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+
+        // Get monthly patterns
+        const monthlyPatterns = await new Promise((resolve, reject) => {
+            db.all(`
+                SELECT 
+                    strftime('%m', start_date) as month,
+                    status,
+                    COUNT(*) as count
+                FROM leave_requests
+                WHERE start_date >= date('now', '-1 year')
+                GROUP BY month, status
+            `, (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+
+        // Get top users by leave usage
+        const topUsers = await new Promise((resolve, reject) => {
+            db.all(`
+                SELECT 
+                    u.username,
+                    u.leave_balance,
+                    COUNT(lr.id) as total_leaves,
+                    ROUND(COUNT(lr.id) * 100.0 / (COUNT(lr.id) + u.leave_balance), 2) as usage_rate
+                FROM users u
+                LEFT JOIN leave_requests lr ON u.id = lr.user_id
+                WHERE u.role != 'admin'
+                GROUP BY u.id
+                ORDER BY total_leaves DESC
+                LIMIT 5
+            `, (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+
+        // Process and format the data
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthlyData = {
+            months: months,
+            approved: new Array(12).fill(0),
+            rejected: new Array(12).fill(0),
+            pending: new Array(12).fill(0)
+        };
+
+        monthlyPatterns.forEach(pattern => {
+            const monthIndex = parseInt(pattern.month) - 1;
+            switch (pattern.status) {
+                case 'Approved':
+                    monthlyData.approved[monthIndex] = pattern.count;
+                    break;
+                case 'Rejected':
+                    monthlyData.rejected[monthIndex] = pattern.count;
+                    break;
+                case 'Pending':
+                    monthlyData.pending[monthIndex] = pattern.count;
+                    break;
+            }
+        });
+
+        // Calculate peak month
+        const totalsByMonth = monthlyData.approved.map((val, idx) => ({
+            month: months[idx],
+            total: val + monthlyData.rejected[idx] + monthlyData.pending[idx]
+        }));
+        const peakMonth = totalsByMonth.reduce((max, curr) => 
+            curr.total > max.total ? curr : max
+        , totalsByMonth[0]).month;
+
+        // Format leave types for chart
+        const leaveTypesFormatted = {
+            labels: leaveTypes.map(lt => lt.leave_type),
+            data: leaveTypes.map(lt => lt.count)
+        };
+
+        // Calculate most common leave type
+        const commonLeaveType = leaveTypes.reduce((max, curr) => 
+            curr.count > max.count ? curr : max
+        , leaveTypes[0])?.leave_type;
+
+        // Get leave requests trend
+        const leaveRequestsTrend = await new Promise((resolve, reject) => {
+            db.all(`
+                SELECT 
+                    strftime('%m', start_date) as month,
+                    COUNT(*) as count
+                FROM leave_requests
+                WHERE start_date >= date('now', '-1 year')
+                GROUP BY month
+                ORDER BY month
+            `, (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+
+        // Get leave balance distribution
+        const leaveBalanceDistribution = await new Promise((resolve, reject) => {
+            db.all(`
+                SELECT 
+                    CASE 
+                        WHEN leave_balance BETWEEN 0 AND 5 THEN '0-5 days'
+                        WHEN leave_balance BETWEEN 6 AND 10 THEN '6-10 days'
+                        WHEN leave_balance BETWEEN 11 AND 15 THEN '11-15 days'
+                        WHEN leave_balance BETWEEN 16 AND 20 THEN '16-20 days'
+                        WHEN leave_balance BETWEEN 21 AND 25 THEN '21-25 days'
+                        ELSE '26-30 days'
+                    END as range,
+                    COUNT(*) as count
+                FROM users
+                WHERE role != 'admin'
+                GROUP BY range
+                ORDER BY range
+            `, (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+
+        const analyticsData = {
+            summary: {
+                totalUsers: userStats.totalUsers,
+                averageLeaveBalance: Math.round(userStats.averageLeaveBalance * 10) / 10,
+                totalPendingRequests: leaveStats.totalPending,
+                totalApprovedRequests: leaveStats.totalApproved
+            },
+            leaveTypes: leaveTypesFormatted,
+            monthlyPatterns: monthlyData,
+            topUsers: topUsers.map(user => ({
+                username: user.username,
+                totalLeaves: user.total_leaves,
+                leaveBalance: user.leave_balance,
+                usageRate: user.usage_rate
+            })),
+            keyMetrics: {
+                avgProcessingTime: 24, // Placeholder - implement actual calculation
+                approvalRate: Math.round(leaveStats.totalApproved * 100 / 
+                    (leaveStats.totalApproved + leaveStats.totalPending) * 10) / 10,
+                peakMonth: peakMonth,
+                commonLeaveType: commonLeaveType
+            },
+            leaveRequestsTrend: {
+                labels: months,
+                data: months.map((_,i) => {
+                    const monthData = leaveRequestsTrend.find(r => parseInt(r.month) === i + 1);
+                    return monthData ? monthData.count : 0;
+                })
+            },
+            leaveBalanceDistribution: {
+                labels: ['0-5 days', '6-10 days', '11-15 days', '16-20 days', '21-25 days', '26-30 days'],
+                data: leaveBalanceDistribution.map(d => d.count)
+            }
+        };
+
+        res.json(analyticsData);
+    } catch (error) {
+        console.error('Error generating analytics:', error);
+        res.status(500).json({ error: 'Error generating analytics data' });
+    }
 });
 
 app.listen(port, () => {
@@ -634,6 +769,92 @@ app.get('/api/dashboard-stats', authenticateToken, (req, res) => {
             return res.status(500).json({ error: 'Error fetching dashboard stats' });
         }
         res.json(row);
+    });
+});
+
+app.get('/api/leave-balance', authenticateToken, (req, res) => {
+    const userId = req.user.id;
+    
+    db.get(
+        'SELECT leave_balance FROM users WHERE id = ?',
+        [userId],
+        (err, row) => {
+            if (err) {
+                console.error('Database error:', err);
+                return res.status(500).json({ error: 'Failed to fetch leave balance' });
+            }
+            
+            res.json({ balance: row ? row.leave_balance : 0 });
+        }
+    );
+});
+
+app.get('/api/dashboard-stats', authenticateToken, (req, res) => {
+    const userId = req.user.id;
+    
+    db.get(`
+        SELECT 
+            (SELECT COUNT(*) FROM leave_requests 
+             WHERE user_id = ? AND status = 'Pending') as pendingRequests,
+            (SELECT COUNT(*) FROM announcements 
+             WHERE created_at >= datetime('now', '-7 days')) as recentAnnouncements
+    `, [userId], (err, row) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+        }
+        
+        res.json({
+            pendingRequests: row ? row.pendingRequests : 0,
+            recentAnnouncements: row ? row.recentAnnouncements : 0
+        });
+    });
+});
+
+// Add this to your server.js
+app.post('/api/leave_requests', authenticateToken, (req, res) => {
+    const userId = req.user.id;
+    const { start_date, end_date, leave_type, reason } = req.body;
+
+    // Basic validation
+    if (!start_date || !end_date || !leave_type || !reason) {
+        return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    // Insert the new leave request
+    db.run(`
+        INSERT INTO leave_requests (
+            user_id, 
+            start_date, 
+            end_date, 
+            leave_type, 
+            reason, 
+            status
+        ) VALUES (?, ?, ?, ?, ?, 'Pending')
+    `, [userId, start_date, end_date, leave_type, reason], function(err) {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ error: 'Failed to submit leave request' });
+        }
+        
+        res.json({ 
+            message: 'Leave request submitted successfully', 
+            id: this.lastID 
+        });
+    });
+});
+
+// Add this new endpoint to check for existing usernames
+app.get('/api/check-username', (req, res) => {
+    const username = req.query.username;
+    
+    db.get('SELECT id FROM users WHERE username = ?', [username], (err, row) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ error: 'Server error' });
+        }
+        
+        res.json({ exists: !!row });
     });
 });
 

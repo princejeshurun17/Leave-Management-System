@@ -20,18 +20,10 @@
                 </button>
             </div>
             <div class="sidebar-content">
-                <div class="user-info">
-                    <i class="fas fa-user-circle"></i>
-                    <span id="userGreeting">Welcome!</span>
-                </div>
                 <nav class="sidebar-nav">
                     <a href="admin-dashboard.html" class="nav-item">
                         <i class="fas fa-calendar-check"></i>
-                        <span>Leave Requests</span>
-                    </a>
-                    <a href="admin-dashboard.html#user-management" class="nav-item">
-                        <i class="fas fa-users"></i>
-                        <span>User Management</span>
+                        <span>Dashboard</span>
                     </a>
                     <a href="admin-analytics.html" class="nav-item active">
                         <i class="fas fa-chart-line"></i>
@@ -51,23 +43,68 @@
                 <h1>Leave Management Analytics</h1>
             </header>
             
-            <main>
-                <section class="analytics-summary card">
+            <main class="analytics-container">
+                <!-- Summary Statistics (spans both columns) -->
+                <section class="analytics-summary">
                     <h2>Summary</h2>
                     <div id="summaryStats" class="summary-grid"></div>
                 </section>
 
-                <div class="analytics-grid">
-                    <section class="analytics-chart card">
-                        <h2>Leave Requests Trend</h2>
+                <!-- Left Column -->
+                <section class="analytics-chart">
+                    <h2>Leave Requests Trend</h2>
+                    <div class="chart-container">
                         <canvas id="leaveRequestsTrend"></canvas>
-                    </section>
+                    </div>
+                </section>
 
-                    <section class="analytics-chart card">
-                        <h2>Leave Balance Distribution</h2>
+                <!-- Right Column -->
+                <section class="analytics-chart">
+                    <h2>Leave Balance Distribution</h2>
+                    <div class="chart-container">
                         <canvas id="leaveBalanceDistribution"></canvas>
-                    </section>
-                </div>
+                    </div>
+                </section>
+
+                <!-- Left Column -->
+                <section class="analytics-chart">
+                    <h2>Leave Types Distribution</h2>
+                    <div class="chart-container">
+                        <canvas id="leaveTypesChart"></canvas>
+                    </div>
+                </section>
+
+                <!-- Right Column -->
+                <section class="analytics-chart">
+                    <h2>Monthly Leave Patterns</h2>
+                    <div class="chart-container">
+                        <canvas id="monthlyPatternsChart"></canvas>
+                    </div>
+                </section>
+
+                <!-- Left Column -->
+                <section class="analytics-table">
+                    <h2>Top Users by Leave Usage</h2>
+                    <div class="table-responsive">
+                        <table id="topUsersTable">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Total Leaves</th>
+                                    <th>Leave Balance</th>
+                                    <th>Usage Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Right Column -->
+                <section class="analytics-stats">
+                    <h2>Key Metrics</h2>
+                    <div id="keyMetrics" class="metrics-grid"></div>
+                </section>
             </main>
         </div>
     </div>

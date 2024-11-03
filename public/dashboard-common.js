@@ -34,7 +34,7 @@ async function fetchUserInfo() {
         });
         if (response.ok) {
             const data = await response.json();
-            document.getElementById('userGreeting').textContent = `Welcome, ${data.username}!`;
+            document.getElementById('userGreeting').textContent = `Welcome!`;
         }
     } catch (error) {
         console.error('Error fetching user info:', error);

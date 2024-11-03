@@ -19,10 +19,6 @@
                 </button>
             </div>
             <div class="sidebar-content">
-                <div class="user-info">
-                    <i class="fas fa-user-circle"></i>
-                    <span id="userGreeting">Welcome!</span>
-                </div>
                 <nav class="sidebar-nav">
                     <a href="dashboard.html" class="nav-item">
                         <i class="fas fa-home"></i>
@@ -46,61 +42,66 @@
 
         <!-- Main Content -->
         <div class="main-content">
-            <main>
-                <section class="leave-request-form card">
-                    <h2>Submit Leave Request</h2>
-                    <form id="leaveRequestForm">
+            <header class="dashboard-header">
+                <h1>My Leave Requests</h1>
+            </header>
+
+            <!-- New Leave Request Form -->
+            <div class="card leave-request-form">
+                <h2>Submit New Leave Request</h2>
+                <form id="newLeaveForm">
+                    <div class="form-grid">
                         <div class="form-group">
-                            <label for="leaveType">Leave Type:</label>
+                            <label for="startDate">Start Date</label>
+                            <input type="date" id="startDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="endDate">End Date</label>
+                            <input type="date" id="endDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="leaveType">Leave Type</label>
                             <select id="leaveType" required>
                                 <option value="Annual Leave">Annual Leave</option>
                                 <option value="Sick Leave">Sick Leave</option>
                                 <option value="Emergency Leave">Emergency Leave</option>
-                                <option value="Maternity Leave">Maternity Leave</option>
-                                <option value="Paternity Leave">Paternity Leave</option>
-                                <option value="Bereavement Leave">Bereavement Leave</option>
-                                <option value="Unpaid Leave">Unpaid Leave</option>
+                                <option value="Other">Other</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="startDate">Start Date:</label>
-                            <input type="date" id="startDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="endDate">End Date:</label>
-                            <input type="date" id="endDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="reason">Reason:</label>
+                            <label for="reason">Reason</label>
                             <textarea id="reason" required></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary">Submit Request</button>
-                    </form>
-                </section>
-                
-                <section class="leave-requests card">
-                    <h2>My Leave Requests</h2>
-                    <div class="table-responsive">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Start Date</th>
-                                    <th>End Date</th>
-                                    <th>Days</th>
-                                    <th>Type</th>
-                                    <th>Reason</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="leaveRequestsList"></tbody>
-                        </table>
                     </div>
-                </section>
-            </main>
+                    <button type="submit" class="btn-submit">Submit Request</button>
+                </form>
+            </div>
+
+            <!-- Existing Leave Requests Table -->
+            <div class="card">
+                <h2>My Leave Requests</h2>
+                <table id="simpleLeaveTable">
+                    <thead>
+                        <tr>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Days</th>
+                            <th>Type</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaveTableBody">
+                        <!-- Data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-    <script src="dashboard-common.js"></script>
+
+    <script src="sidebar.js"></script>
+    <script src="logout.js"></script>
     <script src="dashboard-leaves.js"></script>
 </body>
 </html> 

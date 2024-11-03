@@ -5,6 +5,51 @@ leave_type column might already exist:
 Users table created or already exists.
 user_id column already exists in leave_requests table
 Leave_requests table created or already exists.
+Status column might already exist:
+leave_type column might already exist:
+Login successful for user:
+Authenticated user:
+Authenticated user:
+Login failed: User not found
+Login failed: Invalid password
+Login failed: User not found
+Login failed: User not found
+Login successful for user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Login successful for user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Login successful for user:
 Authenticated user:
 Authenticated user:
 Authenticated user:
@@ -17,13 +62,27 @@ Authenticated user:
 Authenticated user:
 Authenticated user:
 Authenticated user:
-Analytics data:
-Number of users:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
 Authenticated user:
 Authenticated user:
 Authenticated user:
 Authenticated user:
 Login successful for user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Login successful for user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
+Authenticated user:
 Authenticated user:
 Authenticated user:
 Authenticated user:
